@@ -1062,7 +1062,7 @@ static int ca8210_spi_exchange(
 	}
 
 cleanup:
-	complete(priv->prev_transfer_complete);
+	complete(&priv->prev_transfer_complete);
 	priv->sync_command_response = NULL;
 	return status;
 }
