@@ -47,6 +47,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define DEBUG 1
+
 #include <linux/cdev.h>
 #include <linux/clk-provider.h>
 #include <linux/debugfs.h>
@@ -760,6 +762,7 @@ static void ca8210_rx_done(struct cas_control *cas_ctl)
 		if (priv->sync_command_response) {
 			memcpy(priv->sync_command_response, buf, len);
 			complete(&priv->sync_exchange_complete);
+			dev_dbg(&priv->spi->dev, "sync complete1\n");
 		} else {
 			if (cascoda_api_upstream)
 				cascoda_api_upstream(buf, len, priv->spi);
@@ -920,6 +923,7 @@ static void ca8210_spi_transfer_complete(void *context)
 cleanup:
 	complete(&priv->spi_transfer_complete);
 	complete(&priv->prev_transfer_complete);
+	dev_dbg(&priv->spi->dev, "prev & spi complete\n");
 }
 
 /**
@@ -940,6 +944,7 @@ static int ca8210_spi_transfer(
 	struct ca8210_priv *priv = spi_get_drvdata(spi);
 	struct cas_control *cas_ctl;
 
+	dev_dbg(&priv->spi->dev, "waiting on prev\n");
 	wait_for_completion_interruptible(&priv->prev_transfer_complete);
 
 	dev_dbg(&spi->dev, "ca8210_spi_transfer called\n");
@@ -1028,9 +1033,11 @@ static int ca8210_spi_exchange(
 				continue;
 			if (((buf[0] & SPI_SYN) && response))
 			    complete(&priv->sync_exchange_complete);
+			dev_dbg(&priv->spi->dev, "sync complete2\n");
 			goto cleanup;
 		}
 
+		dev_dbg(&priv->spi->dev, "waiting on spi\n");
 		wait_remaining = wait_for_completion_interruptible_timeout(
 			&priv->spi_transfer_complete,
 			msecs_to_jiffies(1000)
@@ -1050,6 +1057,7 @@ static int ca8210_spi_exchange(
 	if (!((buf[0] & SPI_SYN) && response))
 		goto cleanup;
 
+	dev_dbg(&priv->spi->dev, "waiting on sync\n");
 	wait_remaining = wait_for_completion_interruptible_timeout(
 		&priv->sync_exchange_complete,
 		msecs_to_jiffies(CA8210_SYNC_TIMEOUT)
@@ -3169,6 +3177,7 @@ static int ca8210_probe(struct spi_device *spi_device)
 	init_completion(&priv->prev_transfer_complete);
 	init_completion(&priv->sync_exchange_complete);
 	complete(&priv->prev_transfer_complete);
+	dev_dbg(&priv->spi->dev, "prev complete\n");
 	spi_set_drvdata(priv->spi, priv);
 	if (IS_ENABLED(CONFIG_IEEE802154_CA8210_DEBUGFS)) {
 		cascoda_api_upstream = ca8210_test_int_driver_write;
