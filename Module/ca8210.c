@@ -761,8 +761,8 @@ static void ca8210_rx_done(struct cas_control *cas_ctl)
 	if (buf[0] & SPI_SYN) {
 		if (priv->sync_command_response) {
 			memcpy(priv->sync_command_response, buf, len);
-			complete(&priv->sync_exchange_complete);
 			dev_dbg(&priv->spi->dev, "sync complete1\n");
+			complete(&priv->sync_exchange_complete);
 		} else {
 			if (cascoda_api_upstream)
 				cascoda_api_upstream(buf, len, priv->spi);
@@ -925,9 +925,9 @@ static void ca8210_spi_transfer_complete(void *context)
 	priv->retries = 0;
 
 cleanup:
+	dev_dbg(&priv->spi->dev, "prev & spi complete\n");
 	complete(&priv->spi_transfer_complete);
 	complete(&priv->prev_transfer_complete);
-	dev_dbg(&priv->spi->dev, "prev & spi complete\n");
 }
 
 /**
@@ -1032,9 +1032,10 @@ static int ca8210_spi_exchange(
 			);
 			if (status == -EBUSY)
 				continue;
-			if (((buf[0] & SPI_SYN) && response))
+			if (((buf[0] & SPI_SYN) && response)){
+				dev_dbg(&priv->spi->dev, "sync complete2\n");
 			    complete(&priv->sync_exchange_complete);
-			dev_dbg(&priv->spi->dev, "sync complete2\n");
+			}
 			goto cleanup;
 		}
 
@@ -3179,8 +3180,8 @@ static int ca8210_probe(struct spi_device *spi_device)
 	init_completion(&priv->spi_transfer_complete);
 	init_completion(&priv->prev_transfer_complete);
 	init_completion(&priv->sync_exchange_complete);
-	complete(&priv->prev_transfer_complete);
 	dev_dbg(&priv->spi->dev, "prev complete\n");
+	complete(&priv->prev_transfer_complete);
 	spi_set_drvdata(priv->spi, priv);
 	if (IS_ENABLED(CONFIG_IEEE802154_CA8210_DEBUGFS)) {
 		cascoda_api_upstream = ca8210_test_int_driver_write;
