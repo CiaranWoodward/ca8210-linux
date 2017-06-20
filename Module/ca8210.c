@@ -912,7 +912,7 @@ static void ca8210_spi_transfer_complete(void *context)
 			);
 		ca8210_rx_done(cas_ctl);
 	}
-	complete(&priv->spi_transfer_complete);
+	complete_all(&priv->spi_transfer_complete);
 	kfree(cas_ctl);
 	priv->retries = 0;
 }
