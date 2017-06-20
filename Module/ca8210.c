@@ -867,6 +867,10 @@ static void ca8210_spi_transfer_complete(void *context)
 	int i;
 	u8 retry_buffer[CA8210_SPI_BUF_SIZE];
 
+	dev_dbg(&priv->spi->dev, "waiting on prev\n");
+	wait_for_completion_interruptible(&priv->prev_transfer_complete);
+	dev_dbg(&priv->spi->dev, "passed prev wait\n");
+
 	if (
 		(cas_ctl->tx_in_buf[0] == SPI_NACK ||
 		cas_ctl->tx_in_buf[0] == SPI_IDLE) &&
@@ -943,10 +947,6 @@ static int ca8210_spi_transfer(
 	int i, status = 0;
 	struct ca8210_priv *priv = spi_get_drvdata(spi);
 	struct cas_control *cas_ctl;
-
-	dev_dbg(&priv->spi->dev, "waiting on prev\n");
-	wait_for_completion_interruptible(&priv->prev_transfer_complete);
-	dev_dbg(&priv->spi->dev, "passed prev wait\n");
 
 	dev_dbg(&spi->dev, "ca8210_spi_transfer called\n");
 
