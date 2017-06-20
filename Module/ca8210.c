@@ -935,6 +935,7 @@ static int ca8210_spi_transfer(
 	struct ca8210_priv *priv = spi_get_drvdata(spi);
 	struct cas_control *cas_ctl;
 
+	wait_for_completion_interruptible(&priv->spi_transfer_complete);
 	reinit_completion(&priv->spi_transfer_complete);
 
 	dev_dbg(&spi->dev, "ca8210_spi_transfer called\n");
@@ -1013,7 +1014,6 @@ static int ca8210_spi_exchange(
 	}
 
 	do {
-		reinit_completion(&priv->spi_transfer_complete);
 		status = ca8210_spi_transfer(priv->spi, buf, len);
 		if (status) {
 			dev_warn(
@@ -3164,6 +3164,7 @@ static int ca8210_probe(struct spi_device *spi_device)
 	init_completion(&priv->ca8210_is_awake);
 	init_completion(&priv->spi_transfer_complete);
 	init_completion(&priv->sync_exchange_complete);
+	complete(&priv->spi_transfer_complete);
 	spi_set_drvdata(priv->spi, priv);
 	if (IS_ENABLED(CONFIG_IEEE802154_CA8210_DEBUGFS)) {
 		cascoda_api_upstream = ca8210_test_int_driver_write;
