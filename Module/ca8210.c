@@ -864,6 +864,7 @@ static void ca8210_spi_transfer_complete(void *context)
 	struct cas_control *cas_ctl = context;
 	struct ca8210_priv *priv = cas_ctl->priv;
 	bool duplex_rx = false;
+	bool is_retrying = false;
 	int i;
 	u8 retry_buffer[CA8210_SPI_BUF_SIZE];
 
@@ -900,6 +901,7 @@ static void ca8210_spi_transfer_complete(void *context)
 			retry_buffer,
 			CA8210_SPI_BUF_SIZE
 		);
+		is_retrying = true;
 		priv->retries++;
 		dev_info(&priv->spi->dev, "retried spi write\n");
 		goto cleanup;
@@ -926,7 +928,7 @@ static void ca8210_spi_transfer_complete(void *context)
 
 cleanup:
 	dev_dbg(&priv->spi->dev, "prev & spi complete\n");
-	complete(&priv->spi_transfer_complete);
+	if(!is_retrying) complete(&priv->spi_transfer_complete);
 	complete(&priv->prev_transfer_complete);
 }
 
@@ -1023,7 +1025,11 @@ static int ca8210_spi_exchange(
 	}
 
 	do {
+		wait_for_completion_interruptible(&priv->prev_transfer_complete);//wait for prev
+		reinit_completion(&priv->spi_transfer_complete);//reset spi
 		status = ca8210_spi_transfer(priv->spi, buf, len);
+		complete(&priv->prev_transfer_complete);//complete prev
+
 		if (status) {
 			dev_warn(
 				&spi->dev,
