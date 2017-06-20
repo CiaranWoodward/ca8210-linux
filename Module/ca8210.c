@@ -1026,6 +1026,8 @@ static int ca8210_spi_exchange(
 			);
 			if (status == -EBUSY)
 				continue;
+			if (((buf[0] & SPI_SYN) && response))
+			    complete(&priv->sync_exchange_complete);
 			goto cleanup;
 		}
 
