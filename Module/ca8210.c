@@ -3164,7 +3164,7 @@ static int ca8210_probe(struct spi_device *spi_device)
 	init_completion(&priv->ca8210_is_awake);
 	init_completion(&priv->spi_transfer_complete);
 	init_completion(&priv->sync_exchange_complete);
-	complete(&priv->spi_transfer_complete);
+	complete_all(&priv->spi_transfer_complete);
 	spi_set_drvdata(priv->spi, priv);
 	if (IS_ENABLED(CONFIG_IEEE802154_CA8210_DEBUGFS)) {
 		cascoda_api_upstream = ca8210_test_int_driver_write;
