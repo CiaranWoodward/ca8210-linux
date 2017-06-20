@@ -946,6 +946,7 @@ static int ca8210_spi_transfer(
 
 	dev_dbg(&priv->spi->dev, "waiting on prev\n");
 	wait_for_completion_interruptible(&priv->prev_transfer_complete);
+	dev_dbg(&priv->spi->dev, "passed prev wait\n");
 
 	dev_dbg(&spi->dev, "ca8210_spi_transfer called\n");
 
@@ -1042,6 +1043,7 @@ static int ca8210_spi_exchange(
 			&priv->spi_transfer_complete,
 			msecs_to_jiffies(1000)
 		);
+		dev_dbg(&priv->spi->dev, "passed spi wait\n");
 		if (wait_remaining == -ERESTARTSYS) {
 			status = -ERESTARTSYS;
 		} else if (wait_remaining == 0) {
@@ -1062,6 +1064,7 @@ static int ca8210_spi_exchange(
 		&priv->sync_exchange_complete,
 		msecs_to_jiffies(CA8210_SYNC_TIMEOUT)
 	);
+	dev_dbg(&priv->spi->dev, "passed sync wait\n");
 	if (wait_remaining == -ERESTARTSYS) {
 		status = -ERESTARTSYS;
 	} else if (wait_remaining == 0) {
